@@ -48,6 +48,7 @@
 #include "std_msgs/msg/string.hpp"
 
 #include "px4_msgs/msg/offboard_control_mode.hpp"
+#include "px4_msgs/msg/vehicle_attitude_setpoint.hpp"
 #include "px4_msgs/msg/position_setpoint_triplet.hpp"
 #include "px4_msgs/msg/vehicle_status.hpp"
 #include "px4_msgs/msg/vehicle_attitude.hpp"
@@ -95,12 +96,15 @@ class Px4Manipulation : public rclcpp::Node
 
     rclcpp::TimerBase::SharedPtr statusloop_timer_;
     rclcpp::Publisher<px4_msgs::msg::OffboardControlMode>::SharedPtr offboard_mode_pub_;
+    rclcpp::Publisher<px4_msgs::msg::VehicleAttitudeSetpoint>::SharedPtr vehicle_attitude_pub_;
     rclcpp::Subscription<px4_msgs::msg::VehicleStatus>::SharedPtr vehicle_status_sub_;
     rclcpp::Subscription<px4_msgs::msg::VehicleAttitude>::SharedPtr vehicle_attitude_sub_;
     rclcpp::Subscription<px4_msgs::msg::VehicleLocalPosition>::SharedPtr vehicle_local_position_sub_;
   
 
     uint8_t vehicle_nav_state_;
-    Eigen::Vector4d vehicle_attitude_{Eigen::Vector4d(1.0, 0.0, 0.0, 0.0)};
+    Eigen::Quaterniond vehicle_attitude_{Eigen::Quaterniond(1.0, 0.0, 0.0, 0.0)};
     Eigen::Vector3d vehicle_position_{Eigen::Vector3d(0.0, 0.0, 0.0)};
+    Eigen::Vector3d vehicle_velocity_{Eigen::Vector3d(0.0, 0.0, 0.0)};
+    double angle_{0.0};
 };
