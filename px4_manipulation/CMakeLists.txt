@@ -18,6 +18,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(manipulation_msgs REQUIRED)
 find_package(px4_msgs REQUIRED)
 
 
@@ -28,13 +29,18 @@ include_directories(
 add_executable(talker
   src/main.cpp
   src/px4_manipulation.cpp)
-ament_target_dependencies(talker rclcpp std_msgs geometry_msgs px4_msgs)
+ament_target_dependencies(talker rclcpp std_msgs geometry_msgs px4_msgs manipulation_msgs)
 target_include_directories(talker PUBLIC "${Eigen3_INCLUDE_DIRS}")
 target_link_libraries(talker)
 
 install(TARGETS
   talker
   DESTINATION lib/${PROJECT_NAME})
+
+install(PROGRAMS
+  Tools/rviz_targetpose_marker.py
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 install(DIRECTORY
   launch
