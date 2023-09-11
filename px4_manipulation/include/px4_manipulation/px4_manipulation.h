@@ -53,6 +53,7 @@
 #include "px4_msgs/msg/vehicle_status.hpp"
 #include "px4_msgs/msg/vehicle_attitude.hpp"
 #include "px4_msgs/msg/vehicle_local_position.hpp"
+#include "manipulation_msgs/srv/set_pose.hpp"
 
 
 using namespace std::chrono_literals;
@@ -94,17 +95,28 @@ class Px4Manipulation : public rclcpp::Node
      */
     void vehicleLocalPositionCallback(const px4_msgs::msg::VehicleLocalPosition &msg);
 
+    /**
+     * @brief Callback for target vehicle pose service
+     * 
+     * @param request 
+     * @param response 
+     */
+    void targetPoseCallback(const std::shared_ptr<manipulation_msgs::srv::SetPose::Request> request,
+          std::shared_ptr<manipulation_msgs::srv::SetPose::Response> response);
+
     rclcpp::TimerBase::SharedPtr statusloop_timer_;
     rclcpp::Publisher<px4_msgs::msg::OffboardControlMode>::SharedPtr offboard_mode_pub_;
     rclcpp::Publisher<px4_msgs::msg::VehicleAttitudeSetpoint>::SharedPtr vehicle_attitude_pub_;
     rclcpp::Subscription<px4_msgs::msg::VehicleStatus>::SharedPtr vehicle_status_sub_;
     rclcpp::Subscription<px4_msgs::msg::VehicleAttitude>::SharedPtr vehicle_attitude_sub_;
     rclcpp::Subscription<px4_msgs::msg::VehicleLocalPosition>::SharedPtr vehicle_local_position_sub_;
-  
+    rclcpp::Service<manipulation_msgs::srv::SetPose>::SharedPtr pose_service_;
 
     uint8_t vehicle_nav_state_;
     Eigen::Quaterniond vehicle_attitude_{Eigen::Quaterniond(1.0, 0.0, 0.0, 0.0)};
     Eigen::Vector3d vehicle_position_{Eigen::Vector3d(0.0, 0.0, 0.0)};
     Eigen::Vector3d vehicle_velocity_{Eigen::Vector3d(0.0, 0.0, 0.0)};
-    double angle_{0.0};
+
+    Eigen::Vector3d reference_position_{Eigen::Vector3d(0.0, 0.0, 10.0)};
+    Eigen::Quaterniond reference_attitude_{Eigen::Quaterniond(1.0, 0.0, 0.0, 0.0)};
 };

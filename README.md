@@ -25,3 +25,7 @@ This runs two ros nodes, which publishes offboard position control setpoints and
 ```
 ros2 launch px4_manipulation run.launch.py
 ```
+
+![omnicoptercommands](https://github.com/Jaeyoung-Lim/px4-manipulation/assets/5248102/64477ef6-16ad-4f83-b16b-7e3b8903d57b)
+
+Pose can be commanded through the menu of the interactive marker

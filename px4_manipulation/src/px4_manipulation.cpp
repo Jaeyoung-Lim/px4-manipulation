@@ -56,6 +56,9 @@ Px4Manipulation::Px4Manipulation() : Node("minimal_publisher") {
       "/fmu/out/vehicle_attitude", qos_profile, std::bind(&Px4Manipulation::vehicleAttitudeCallback, this, std::placeholders::_1));
     vehicle_local_position_sub_ = this->create_subscription<px4_msgs::msg::VehicleLocalPosition>(
       "/fmu/out/vehicle_local_position", qos_profile, std::bind(&Px4Manipulation::vehicleLocalPositionCallback, this, std::placeholders::_1));
+
+    pose_service_ = this->create_service<manipulation_msgs::srv::SetPose>("/set_pose", std::bind(&Px4Manipulation::targetPoseCallback, this, std::placeholders::_1, std::placeholders::_2));
+
     // Setup loop timers
     statusloop_timer_ = this->create_wall_timer(20ms, std::bind(&Px4Manipulation::statusloopCallback, this));
 }
@@ -65,20 +68,14 @@ Px4Manipulation::Px4Manipulation() : Node("minimal_publisher") {
 void Px4Manipulation::statusloopCallback() {
 
     // Simple PID position controller
-    Eigen::Vector3d reference_position(0.0, 0.0, 10.0);
-
-    Eigen::Vector3d error_position = vehicle_position_ - reference_position;
+    Eigen::Vector3d error_position = vehicle_position_ - reference_position_;
 
     double kp = 0.05;
     double kd = 0.05;
     Eigen::Vector3d hover_thrust_inertial(0.0, 0.0, 0.2);
     Eigen::Vector3d acceleration_feedback = -kp * error_position -kd * vehicle_velocity_;
 
-
     /// Compute attitude reference
-    ///TODO: Get attitude reference from somewhere else
-    Eigen::Quaterniond qd(std::cos(0.5 * angle_), 0.0, std::sin(0.5 * angle_), 0.0);
-    angle_ += 0.03;
 
     /// Compute thrust values
     Eigen::Vector3d thrust_inertial = acceleration_feedback + hover_thrust_inertial;
@@ -99,10 +96,10 @@ void Px4Manipulation::statusloopCallback() {
     // Publish attitude setpoints
     if (vehicle_nav_state_ == px4_msgs::msg::VehicleStatus::NAVIGATION_STATE_OFFBOARD) {
       px4_msgs::msg::VehicleAttitudeSetpoint attitude_setpoint_msg;
-      attitude_setpoint_msg.q_d[0] = qd.w();
-      attitude_setpoint_msg.q_d[1] = qd.x();
-      attitude_setpoint_msg.q_d[2] = qd.y();
-      attitude_setpoint_msg.q_d[3] = qd.z();
+      attitude_setpoint_msg.q_d[0] = reference_attitude_.w();
+      attitude_setpoint_msg.q_d[1] = reference_attitude_.x();
+      attitude_setpoint_msg.q_d[2] = -reference_attitude_.y();
+      attitude_setpoint_msg.q_d[3] = -reference_attitude_.z();
       attitude_setpoint_msg.thrust_body[0] = thrust_body(0);
       attitude_setpoint_msg.thrust_body[1] = -thrust_body(1);
       attitude_setpoint_msg.thrust_body[2] = -thrust_body(2);
@@ -132,4 +129,18 @@ void Px4Manipulation::vehicleLocalPositionCallback(const px4_msgs::msg::VehicleL
     vehicle_velocity_(0) = msg.vx;
     vehicle_velocity_(1) = -msg.vy;
     vehicle_velocity_(2) = -msg.vz;
+}
+
+void Px4Manipulation::targetPoseCallback(const std::shared_ptr<manipulation_msgs::srv::SetPose::Request> request,
+          std::shared_ptr<manipulation_msgs::srv::SetPose::Response> response) {
+  reference_position_.x() = request->pose.position.x;
+  reference_position_.y() = request->pose.position.y;
+  reference_position_.z() = request->pose.position.z;
+
+  reference_attitude_.w() = request->pose.orientation.w;
+  reference_attitude_.x() = request->pose.orientation.x;
+  reference_attitude_.y() = request->pose.orientation.y;
+  reference_attitude_.z() = request->pose.orientation.z;
+
+  response->result = true;
 }
