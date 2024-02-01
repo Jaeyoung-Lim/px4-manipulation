@@ -47,7 +47,7 @@ Px4Manipulation::Px4Manipulation() : Node("minimal_publisher") {
 
     // Publishers
     offboard_mode_pub_ = this->create_publisher<px4_msgs::msg::OffboardControlMode>("/fmu/in/offboard_control_mode", qos_profile);
-    vehicle_attitude_pub_ = this->create_publisher<px4_msgs::msg::VehicleAttitudeSetpoint>("/fmu/in/vehicle_attitude_setpoint", qos_profile);
+    vehicle_attitude_pub_ = this->create_publisher<px4_msgs::msg::VehicleAttitudeSetpoint>("/fmu/in/offboard_attitude_setpoint", qos_profile);
     
     // Subscribers
     vehicle_status_sub_ = this->create_subscription<px4_msgs::msg::VehicleStatus>(
@@ -90,11 +90,11 @@ void Px4Manipulation::statusloopCallback() {
     offboard_ctrl_mode_msg.velocity=false;
     offboard_ctrl_mode_msg.attitude=true;
     offboard_ctrl_mode_msg.acceleration=false;
-    offboard_mode_pub_->publish(offboard_ctrl_mode_msg);
+    // offboard_mode_pub_->publish(offboard_ctrl_mode_msg);
     // RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", offboard_ctrl_mode_msg.data.c_str());
 
     // Publish attitude setpoints
-    if (vehicle_nav_state_ == px4_msgs::msg::VehicleStatus::NAVIGATION_STATE_OFFBOARD) {
+    // if (vehicle_nav_state_ == px4_msgs::msg::VehicleStatus::NAVIGATION_STATE_OFFBOARD) {
       px4_msgs::msg::VehicleAttitudeSetpoint attitude_setpoint_msg;
       attitude_setpoint_msg.q_d[0] = reference_attitude_.w();
       attitude_setpoint_msg.q_d[1] = reference_attitude_.x();
@@ -104,7 +104,7 @@ void Px4Manipulation::statusloopCallback() {
       attitude_setpoint_msg.thrust_body[1] = -thrust_body(1);
       attitude_setpoint_msg.thrust_body[2] = -thrust_body(2);
       vehicle_attitude_pub_->publish(attitude_setpoint_msg);
-    }
+    // }
 }
 
 void Px4Manipulation::vehicleStatusCallback(const px4_msgs::msg::VehicleStatus &msg) {
